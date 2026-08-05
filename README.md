@@ -25,27 +25,25 @@ A bidirectional AI-powered training ground for sharpening **code review** and **
 
 ## Repo Structure
 
+A Turborepo-powered pnpm monorepo — the gym CLI, plus a dummy fintech app used as a realistic mutation target for exercises. See [CLAUDE.md](CLAUDE.md) for the full breakdown.
+
 ```
 ai-code-gym/
-├── agents/
-│   ├── feature-writer/    # Prompts: writes buggy code
-│   ├── review-critic/     # Prompts: evaluates your review
-│   ├── spec-generator/    # Prompts: writes feature briefs
-│   └── build-reviewer/    # Prompts: evaluates your implementation
-├── exercises/
-│   ├── review-mode/       # AI-generated exercises awaiting your review
-│   └── build-mode/        # Specs awaiting your implementation
-├── feedback/              # Stored agent critiques of your work
-├── src/                   # The `gym` CLI (see CLAUDE.md for details)
-├── exercise-config.json   # Difficulty and topic configuration
+├── turbo.json
+├── pnpm-workspace.yaml
+├── packages/
+│   ├── gym-cli/           # The `gym` CLI — agents/, exercises/, feedback/, src/
+│   └── ui-kit/            # Shared fintech components (CurrencyInput, TransactionRow, LedgerTable)
+├── apps/
+│   └── banking-dashboard/ # Next.js fintech dashboard consuming ui-kit
 └── README.md
 ```
 
 ## Tech Stack
 
-- **Runtime**: Local-first TypeScript CLI (Commander + tsx), run with `pnpm gym <command>`
+- **Runtime**: Turborepo + pnpm workspaces, CLI built with Commander + tsx, run with `pnpm gym <command>`
 - **AI**: Vercel AI SDK — Claude (Anthropic) or a local Ollama model, your choice
-- **Frontend exercises**: React + TypeScript
+- **Frontend exercises**: React + TypeScript, Next.js App Router, Tailwind CSS
 
 ## Getting Started
 

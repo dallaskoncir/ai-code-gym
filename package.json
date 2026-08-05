@@ -1,15 +1,16 @@
 {
-  "name": "ai-code-gym",
+  "name": "fintech-gym",
   "version": "1.0.0",
-  "description": "A local-first AI coding gym for interview prep — Review Mode and Build Mode exercises, scored by Claude or a local Ollama model.",
+  "description": "Turborepo monorepo housing the AI Code Gym CLI and a dummy fintech practice app used as a realistic mutation target for review-mode exercises.",
   "private": true,
+  "type": "module",
   "scripts": {
-    "gym": "tsx src/cli.ts",
-    "typecheck": "tsc --noEmit"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "gym": "pnpm --filter @fintech-gym/cli run gym"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
@@ -17,16 +18,8 @@
       "onFail": "download"
     }
   },
-  "type": "module",
-  "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.28",
-    "ai": "^7.0.50",
-    "ai-sdk-ollama": "^4.1.0",
-    "commander": "^13.1.0"
-  },
   "devDependencies": {
-    "@types/node": "^26.1.2",
-    "tsx": "^4.23.5",
+    "turbo": "^2.3.3",
     "typescript": "^5.9.3"
   }
 }

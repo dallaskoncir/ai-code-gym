@@ -1,0 +1,31 @@
+{
+  "name": "@fintech-gym/cli",
+  "version": "1.0.0",
+  "description": "A local-first AI coding gym for interview prep — Review Mode and Build Mode exercises, scored by Claude or a local Ollama model.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "gym": "./dist/cli.js"
+  },
+  "scripts": {
+    "gym": "tsx src/cli.ts",
+    "dev": "tsx watch src/cli.ts",
+    "build": "tsup src/cli.ts --format esm --target node20 --clean",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.28",
+    "ai": "^7.0.50",
+    "ai-sdk-ollama": "^4.1.0",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsup": "^8.3.5",
+    "tsx": "^4.23.5",
+    "typescript": "^5.9.3"
+  }
+}
