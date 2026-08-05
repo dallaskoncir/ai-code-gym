@@ -15,10 +15,6 @@
     },
     "lint": {
       "outputs": []
-    },
-    "gym": {
-      "cache": false,
-      "persistent": true
     }
   }
 }

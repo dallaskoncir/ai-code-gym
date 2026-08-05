@@ -275,9 +275,6 @@ importers:
       '@types/node':
         specifier: ^26.1.2
         version: 26.1.2
-      tsup:
-        specifier: ^8.3.5
-        version: 8.5.1(jiti@1.21.7)(postcss@8.5.25)(supports-color@7.2.0)(tsx@4.23.5)(typescript@5.9.3)
       tsx:
         specifier: ^4.23.5
         version: 4.23.5

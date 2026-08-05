@@ -130,7 +130,7 @@ pnpm gym build-new --tier 3 --topic accessibility
 
 ## Notes for Future Changes
 
-- `packages/gym-cli/agents/*/system-prompt.md` and `packages/gym-cli/exercise-config.json` are the source of truth for exercise behavior — prefer editing those over hardcoding prompt text in `src/`.
+- `packages/gym-cli/agents/*/system-prompt.md` and `packages/gym-cli/exercise-config.json` are the source of truth for exercise behavior — prefer editing those over hardcoding prompt text in `packages/gym-cli/src/`.
 - Every generated artifact is written both as a timestamped file and as a `latest-*` file, so history isn't clobbered but downstream commands (`review-score`, `build-score`) always have an unambiguous default input.
 - Nothing in `packages/gym-cli/src` talks to GitHub. `build-score` uses local `git diff` against whatever `--repo`/`--base` you point it at — it does not assume this repo is the one being implemented in.
 - `review-new` currently generates a standalone exercise file rather than literally checking out and mutating `apps/banking-dashboard` or `packages/ui-kit` in place — pointing the `feature-writer` agent at those paths as a live mutation target (e.g. writing a diff instead of a fresh file) is the natural next step if you want review-mode exercises to exercise real cross-package review.

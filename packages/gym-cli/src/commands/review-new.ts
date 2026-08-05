@@ -1,10 +1,11 @@
 import type { Command } from "commander";
-import { mkdir, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { generateText } from "ai";
 import { getProvider } from "../ai/provider.js";
 import { readAgentPrompt } from "../lib/agents.js";
 import { loadExerciseConfig, resolveTier, resolveTopic } from "../lib/config.js";
+import { dateSlug, ensureDir, writeTimestampedAndLatest } from "../lib/artifacts.js";
 
 const REVIEW_MODE_DIR = "exercises/review-mode";
 
@@ -42,12 +43,11 @@ Include the hidden <!-- BUGS --> manifest at the end of your response.
       const codeMatch = codePart.match(/```(?:tsx?)?\n([\s\S]*?)```/);
       const code = codeMatch?.[1] ?? codePart.trim();
 
-      await mkdir(REVIEW_MODE_DIR, { recursive: true });
-      const timestamp = new Date().toISOString().slice(0, 10);
+      await ensureDir(REVIEW_MODE_DIR);
+      const timestamp = dateSlug();
 
       await Promise.all([
-        writeFile(path.join(REVIEW_MODE_DIR, `exercise-${timestamp}-${topic}.tsx`), code),
-        writeFile(path.join(REVIEW_MODE_DIR, "latest-exercise.tsx"), code),
+        writeTimestampedAndLatest(REVIEW_MODE_DIR, `exercise-${timestamp}-${topic}.tsx`, "latest-exercise.tsx", code),
         writeFile(
           path.join(REVIEW_MODE_DIR, "latest-bug-manifest.json"),
           JSON.stringify({ raw: bugPart?.trim() ?? "" }, null, 2),
