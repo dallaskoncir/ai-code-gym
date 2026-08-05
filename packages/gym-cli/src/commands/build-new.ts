@@ -1,10 +1,9 @@
 import type { Command } from "commander";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { generateText } from "ai";
 import { getProvider } from "../ai/provider.js";
 import { readAgentPrompt } from "../lib/agents.js";
 import { loadExerciseConfig, resolveTier, resolveTopic } from "../lib/config.js";
+import { dateSlug, writeTimestampedAndLatest } from "../lib/artifacts.js";
 
 const BUILD_MODE_DIR = "exercises/build-mode";
 
@@ -34,12 +33,8 @@ export function registerBuildNew(program: Command): void {
         maxOutputTokens: 2048,
       });
 
-      await mkdir(BUILD_MODE_DIR, { recursive: true });
-      const timestamp = new Date().toISOString().slice(0, 10);
-      await Promise.all([
-        writeFile(path.join(BUILD_MODE_DIR, `spec-${timestamp}-${topic}.md`), spec),
-        writeFile(path.join(BUILD_MODE_DIR, "latest-spec.md"), spec),
-      ]);
+      const timestamp = dateSlug();
+      await writeTimestampedAndLatest(BUILD_MODE_DIR, `spec-${timestamp}-${topic}.md`, "latest-spec.md", spec);
 
       console.log(`Spec written to ${BUILD_MODE_DIR}/latest-spec.md`);
       console.log("Implement it, then run: pnpm gym build-score --repo <path-to-your-implementation>");

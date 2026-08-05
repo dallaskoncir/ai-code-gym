@@ -1,9 +1,10 @@
 import type { Command } from "commander";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { generateText } from "ai";
 import { getProvider } from "../ai/provider.js";
 import { readAgentPrompt } from "../lib/agents.js";
+import { timestampSlug, writeTimestampedAndLatest } from "../lib/artifacts.js";
 
 const REVIEW_MODE_DIR = "exercises/review-mode";
 const FEEDBACK_DIR = "feedback";
@@ -68,12 +69,13 @@ Please evaluate the review using the rubric and return structured markdown feedb
         maxOutputTokens: 2048,
       });
 
-      await mkdir(FEEDBACK_DIR, { recursive: true });
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      await Promise.all([
-        writeFile(path.join(FEEDBACK_DIR, `review-evaluation-${timestamp}.md`), evaluation),
-        writeFile(path.join(FEEDBACK_DIR, "latest-review-evaluation.md"), evaluation),
-      ]);
+      const timestamp = timestampSlug();
+      await writeTimestampedAndLatest(
+        FEEDBACK_DIR,
+        `review-evaluation-${timestamp}.md`,
+        "latest-review-evaluation.md",
+        evaluation,
+      );
 
       console.log(`Feedback written to ${FEEDBACK_DIR}/latest-review-evaluation.md`);
     });
