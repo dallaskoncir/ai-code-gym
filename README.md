@@ -27,33 +27,45 @@ A bidirectional AI-powered training ground for sharpening **code review** and **
 
 ```
 ai-code-gym/
-├── .github/
-│   └── workflows/         # CI to trigger agents and validate PRs
-├── exercises/
-│   ├── review-mode/       # AI-generated PRs awaiting your review
-│   └── build-mode/        # Specs awaiting your implementation
 ├── agents/
 │   ├── feature-writer/    # Prompts: writes buggy code
 │   ├── review-critic/     # Prompts: evaluates your review
-│   └── spec-generator/    # Prompts: writes feature briefs
+│   ├── spec-generator/    # Prompts: writes feature briefs
+│   └── build-reviewer/    # Prompts: evaluates your implementation
+├── exercises/
+│   ├── review-mode/       # AI-generated exercises awaiting your review
+│   └── build-mode/        # Specs awaiting your implementation
 ├── feedback/              # Stored agent critiques of your work
+├── src/                   # The `gym` CLI (see CLAUDE.md for details)
 ├── exercise-config.json   # Difficulty and topic configuration
 └── README.md
 ```
 
 ## Tech Stack
 
-- **Orchestration**: GitHub Actions
-- **AI**: Claude Sonnet (via Anthropic API) for feature writer, review critic, build reviewer
-- **Local Option**: Ollama (Qwen) for spec generation
+- **Runtime**: Local-first TypeScript CLI (Commander + tsx), run with `pnpm gym <command>`
+- **AI**: Vercel AI SDK — Claude (Anthropic) or a local Ollama model, your choice
 - **Frontend exercises**: React + TypeScript
 
 ## Getting Started
 
-1. Add your `ANTHROPIC_API_KEY` to GitHub repository secrets
-2. Edit `exercise-config.json` to set your desired difficulty tier and topic
-3. Trigger the `generate-review-exercise` workflow manually to get your first PR
-4. Review it, then trigger `evaluate-my-review` for feedback
+```bash
+pnpm install
+
+# Claude (default) — requires an API key
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# or run fully locally against Ollama instead
+export AI_CODE_GYM_PROVIDER=ollama
+
+pnpm gym review-new      # generate a buggy component to review
+pnpm gym review-score    # grade the review you wrote in exercises/review-mode/my-review.md
+
+pnpm gym build-new       # generate a feature spec to implement
+pnpm gym build-score     # grade your implementation (git diff against a base ref)
+```
+
+See [CLAUDE.md](CLAUDE.md) for the full command reference and provider configuration.
 
 ## Goals
 
