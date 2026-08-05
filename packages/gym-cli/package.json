@@ -14,9 +14,11 @@
   "license": "ISC",
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.28",
+    "@octokit/rest": "^22.0.1",
     "ai": "^7.0.50",
     "ai-sdk-ollama": "^4.1.0",
-    "commander": "^13.1.0"
+    "commander": "^13.1.0",
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

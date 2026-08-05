@@ -2,7 +2,7 @@
 
 ## Purpose
 
-AI Code Gym is a local-first training ground for sharpening two skills that matter in interviews and on the job: **reviewing** other people's code critically, and **implementing** features to spec under scrutiny. It runs entirely on your machine — there is no CI pipeline, no GitHub App, and no dependency on repository secrets. Everything an exercise needs (prompts, config, generated artifacts, feedback) lives in this working directory.
+AI Code Gym is a local-first training ground for sharpening two skills that matter in interviews and on the job: **reviewing** other people's code critically, and **implementing** features to spec under scrutiny. Everything runs from your machine — there is no CI pipeline and no dependency on repository secrets — but Review Mode is deliberately true-to-life: a dedicated bot GitHub account opens real PRs and posts real review comments on this repo, via `packages/gym-cli/src/core/github.ts`, so reviewing an exercise feels like reviewing a teammate's PR rather than reading a local file. See [GitHub Bot Workflow](#github-bot-workflow) below.
 
 This repo is a **Turborepo-powered pnpm monorepo** with two kinds of workspace member:
 
@@ -12,9 +12,9 @@ This repo is a **Turborepo-powered pnpm monorepo** with two kinds of workspace m
 ## The Two Modes
 
 ### Review Mode
-1. `pnpm gym review-new` asks the `feature-writer` agent to write a realistic React + TypeScript component (or mutate one from the fintech app — see below) containing intentional, tier-appropriate bugs, plus a hidden bug manifest.
-2. You open the generated exercise, read it like a real PR, and write your review comments into `exercises/review-mode/my-review.md` (a template is scaffolded for you).
-3. `pnpm gym review-score` sends your review notes and the hidden bug manifest to the `review-critic` agent, which grades your coverage, depth, and tone, and writes feedback locally.
+1. `pnpm gym review-new` asks the `feature-writer` agent to write a realistic React + TypeScript component (or mutate one from the fintech app — see below) containing intentional, tier-appropriate bugs, plus a hidden bug manifest. The CLI then commits the exercise file (never the bug manifest — that's the answer key) to a new branch as the `AI Feature Writer` bot, pushes it to `origin`, and opens a PR via the bot's GitHub account.
+2. You review the PR on GitHub like a real teammate's code, leaving your comments directly on it.
+3. `pnpm gym review-score --pr <number>` fetches your PR comments and the hidden bug manifest, sends both to the `review-critic` agent, which grades your coverage, depth, and tone, writes feedback locally, and has the bot post the grade back as a comment on the PR.
 
 ### Build Mode
 1. `pnpm gym build-new` asks the `spec-generator` agent to write a feature brief (acceptance criteria, edge cases, component sketch) to `exercises/build-mode/latest-spec.md`.
@@ -51,8 +51,9 @@ ai-code-gym/
 │   │   ├── feedback/             # Agent evaluations, timestamped + "latest"
 │   │   ├── exercise-config.json  # Default difficulty tier, topic, and rubric
 │   │   └── src/
-│   │       ├── cli.ts             # Commander entry point ("gym")
+│   │       ├── cli.ts             # Commander entry point ("gym"), loads packages/gym-cli/.env
 │   │       ├── ai/provider.ts     # Provider factory (Claude / Ollama)
+│   │       ├── core/github.ts     # Octokit wrapper: createPR, fetchPRComments, postPRComment
 │   │       ├── commands/          # review-new, review-score, build-new, build-score
 │   │       └── lib/               # config + agent-prompt loading helpers
 │   └── ui-kit/                  # @fintech-gym/ui-kit — shared fintech component library
@@ -75,8 +76,8 @@ From the repo root, `pnpm gym <command>` (aliased in the root `package.json` to 
 
 | Command | What it does |
 |---|---|
-| `pnpm gym review-new [--tier 1-4] [--topic <topic>]` | Generates a new buggy component + hidden bug manifest + a `my-review.md` template |
-| `pnpm gym review-score [--review <path>] [--exercise <path>]` | Grades your review notes against the hidden bug manifest |
+| `pnpm gym review-new [--tier 1-4] [--topic <topic>]` | Generates a new buggy component + hidden bug manifest, commits the component to a new branch as the bot, and opens a GitHub PR for you to review |
+| `pnpm gym review-score --pr <number> [--exercise <path>]` | Fetches your review comments from the given PR, grades them against the hidden bug manifest, and posts the grade back as a PR comment |
 | `pnpm gym build-new [--tier 1-4] [--topic <topic>]` | Generates a new feature spec |
 | `pnpm gym build-score [--repo <path>] [--base <ref>] [--diff <path>] [--spec <path>]` | Diffs your implementation (`git diff <base>` in `--repo`, or a pre-made `--diff` file) against the spec and grades it |
 
@@ -128,11 +129,28 @@ export OLLAMA_HOST=127.0.0.1:11434
 pnpm gym build-new --tier 3 --topic accessibility
 ```
 
+## GitHub Bot Workflow
+
+Review Mode acts through a dedicated bot GitHub account rather than staying purely local, so a review exercise looks and feels like reviewing a real teammate's PR. `packages/gym-cli/src/core/github.ts` wraps `@octokit/rest` and exports `createPR(branch, title, body)`, `fetchPRComments(prNumber)`, and `postPRComment(prNumber, body)`.
+
+**Env vars** (`packages/gym-cli/.env`, loaded automatically by `src/cli.ts` via `dotenv` — see `.env.example` for a template; never commit `.env`):
+
+| Variable | Purpose |
+|---|---|
+| `GYM_BOT_GH_TOKEN` | Personal access token for the bot account, scoped to `repo` on `GITHUB_REPO` |
+| `GITHUB_OWNER` | Repo owner (your GitHub username) |
+| `GITHUB_REPO` | Repo name (`ai-code-gym`) |
+
+**What actually happens on disk and on GitHub:**
+
+- `review-new` writes the exercise + bug manifest locally (as before), then runs `git checkout -b`, commits **only the exercise file** (never the bug manifest, which is the answer key and must not leak into a PR you're about to review) as `AI Feature Writer <gym-bot@ai-code-gym.local>`, `git push`es the branch to `origin`, switches back to your original branch, and calls `github.createPR(...)` to open the PR against `main`.
+- `review-score --pr <number>` calls `github.fetchPRComments(prNumber)` to pull your review comments straight from the PR (there is no more local `my-review.md` grading path), grades them against the hidden bug manifest, and calls `github.postPRComment(...)` to post the grade back onto the PR, in addition to writing `feedback/latest-review-evaluation.md` locally.
+- Build Mode is unaffected — `build-score` still just runs local `git diff` against whatever `--repo`/`--base` you point it at and does not touch GitHub.
+
 ## Notes for Future Changes
 
 - `packages/gym-cli/agents/*/system-prompt.md` and `packages/gym-cli/exercise-config.json` are the source of truth for exercise behavior — prefer editing those over hardcoding prompt text in `packages/gym-cli/src/`.
 - Every generated artifact is written both as a timestamped file and as a `latest-*` file, so history isn't clobbered but downstream commands (`review-score`, `build-score`) always have an unambiguous default input.
-- Nothing in `packages/gym-cli/src` talks to GitHub. `build-score` uses local `git diff` against whatever `--repo`/`--base` you point it at — it does not assume this repo is the one being implemented in.
 - `review-new` currently generates a standalone exercise file rather than literally checking out and mutating `apps/banking-dashboard` or `packages/ui-kit` in place — pointing the `feature-writer` agent at those paths as a live mutation target (e.g. writing a diff instead of a fresh file) is the natural next step if you want review-mode exercises to exercise real cross-package review.
 - Turbo's `build` task depends on `^build`, so `packages/ui-kit` (and its compiled `dist/`, including `styles.css`) always builds before `apps/banking-dashboard` consumes it.
 
