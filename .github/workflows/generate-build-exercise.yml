@@ -1,0 +1,44 @@
+name: Generate Build Exercise
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Difficulty tier (1-4)'
+        required: false
+        default: '2'
+      topic:
+        description: 'Topic area'
+        required: false
+        default: 'forms'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @anthropic-ai/sdk
+
+      - name: Generate feature spec
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TIER: ${{ github.event.inputs.tier }}
+          TOPIC: ${{ github.event.inputs.topic }}
+        run: node scripts/generate-build-exercise.mjs
+
+      - name: Commit spec to exercises/build-mode
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "ai-code-gym[bot]"
+          git config user.email "ai-code-gym[bot]@users.noreply.github.com"
+          git add exercises/build-mode/
+          git commit -m "feat: [BUILD EXERCISE] tier-${TIER} ${TOPIC} spec"
+          git push origin main

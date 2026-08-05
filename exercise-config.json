@@ -1,0 +1,27 @@
+{
+  "difficulty_tier": 2,
+  "mode": "review",
+  "topic": "react-hooks",
+  "topics_available": [
+    "react-hooks",
+    "accessibility",
+    "typescript",
+    "async-data-fetching",
+    "component-architecture",
+    "performance",
+    "forms",
+    "routing"
+  ],
+  "tier_descriptions": {
+    "1": "Single isolated bugs — wrong prop type, missing key, basic logic error",
+    "2": "Logic errors requiring React lifecycle or async understanding",
+    "3": "Architectural problems — bad abstractions, wrong data flow, coupling issues",
+    "4": "Compound multi-file issues with intentional red herrings"
+  },
+  "review_criteria": {
+    "coverage": "Did the reviewer catch all introduced bugs?",
+    "depth": "Did the reviewer explain WHY each issue is a problem?",
+    "tone": "Is the feedback constructive, specific, and professional?",
+    "extras": "Did the reviewer note style, performance, or accessibility concerns beyond the bugs?"
+  }
+}
