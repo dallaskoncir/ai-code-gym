@@ -79,25 +79,34 @@ Include the hidden <!-- BUGS --> manifest at the end of your response.
       const branchName = `gym/review-${topic}-${timestampSlug()}`;
 
       console.log(`Committing the exercise and opening a PR as the "${BOT_GIT_NAME}" bot...`);
-      runGit(["checkout", "-b", branchName], repoDir);
-      runGit(
-        ["add", path.join(REVIEW_MODE_DIR, exerciseFileName), path.join(REVIEW_MODE_DIR, "latest-exercise.tsx")],
-        repoDir,
-      );
-      runGit(
-        [
-          "-c",
-          `user.name=${BOT_GIT_NAME}`,
-          "-c",
-          `user.email=${BOT_GIT_EMAIL}`,
-          "commit",
-          "-m",
-          `Review Mode: tier ${tier} ${topic} exercise`,
-        ],
-        repoDir,
-      );
-      runGit(["push", "-u", "origin", branchName], repoDir);
-      runGit(["checkout", originalBranch], repoDir);
+      let branchCreated = false;
+      try {
+        runGit(["checkout", "-b", branchName], repoDir);
+        branchCreated = true;
+        runGit(
+          ["add", path.join(REVIEW_MODE_DIR, exerciseFileName), path.join(REVIEW_MODE_DIR, "latest-exercise.tsx")],
+          repoDir,
+        );
+        runGit(
+          [
+            "-c",
+            `user.name=${BOT_GIT_NAME}`,
+            "-c",
+            `user.email=${BOT_GIT_EMAIL}`,
+            "commit",
+            "-m",
+            `Review Mode: tier ${tier} ${topic} exercise`,
+          ],
+          repoDir,
+        );
+        runGit(["push", "-u", "origin", branchName], repoDir);
+      } finally {
+        // However far the sequence above got, never leave the user stranded on the
+        // throwaway branch — always try to restore whatever branch they started on.
+        if (branchCreated) {
+          runGit(["checkout", originalBranch], repoDir);
+        }
+      }
 
       const pr = await createPR(
         branchName,

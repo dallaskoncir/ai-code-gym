@@ -51,17 +51,25 @@ export async function createPR(branch: string, title: string, body: string): Pro
   return { number: data.number, url: data.html_url };
 }
 
-/** Returns the text of every issue-level comment on the PR (i.e. your review notes), in post order. */
+/**
+ * Returns the text of every comment on the PR — Conversation-tab comments, inline review
+ * comments, and review summary bodies — since a reviewer following the bot's own PR
+ * instructions ("leave your comments as PR review comments") produces the latter two,
+ * not the former.
+ */
 export async function fetchPRComments(prNumber: number): Promise<string[]> {
   const { owner, repo } = loadGithubEnv();
   const octokit = getClient();
-  const comments = await octokit.paginate(octokit.rest.issues.listComments, {
-    owner,
-    repo,
-    issue_number: prNumber,
-    per_page: 100,
-  });
-  return comments.map((comment) => comment.body ?? "").filter((body) => body.trim().length > 0);
+
+  const [issueComments, reviewComments, reviews] = await Promise.all([
+    octokit.paginate(octokit.rest.issues.listComments, { owner, repo, issue_number: prNumber, per_page: 100 }),
+    octokit.paginate(octokit.rest.pulls.listReviewComments, { owner, repo, pull_number: prNumber, per_page: 100 }),
+    octokit.paginate(octokit.rest.pulls.listReviews, { owner, repo, pull_number: prNumber, per_page: 100 }),
+  ]);
+
+  return [...issueComments, ...reviewComments, ...reviews]
+    .map((entry) => entry.body ?? "")
+    .filter((body) => body.trim().length > 0);
 }
 
 export async function postPRComment(prNumber: number, body: string): Promise<void> {
